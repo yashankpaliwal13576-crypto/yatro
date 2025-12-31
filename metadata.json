@@ -1,0 +1,7 @@
+{
+  "name": "Copy of Copy of Copy of Copy of Yatrojana - AI Powered Travel",
+  "description": "An online travel planning platform providing budget-friendly dream travel packages and curated homestays across India, now with Yatro AI intelligence.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
