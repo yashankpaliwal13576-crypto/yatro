@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type, Modality, GenerateContentResponse } from "@google/genai";
 
 // Exporting getAI to allow shared usage across components and ensuring new instances are created per request
@@ -176,7 +175,7 @@ export async function getHotelInfo(location: string, adults: string, children: s
   const ai = getAI();
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
-    contents: `Find top-rated ${priceRange} hotels in ${location} for exactly ${adults} adults and ${children} children. Include specific pricing and confirmed pax capacity in the response.`,
+    contents: `Find top-rated ${priceRange} hotels in ${location} for exactly ${adults} adults and ${children} children. You MUST return a specific price per night and the maximum occupancy details for adults and children.`,
     config: {
       tools: [{ googleSearch: {} }],
       responseMimeType: "application/json",
@@ -190,10 +189,10 @@ export async function getHotelInfo(location: string, adults: string, children: s
               properties: {
                 name: { type: Type.STRING },
                 locationNote: { type: Type.STRING },
-                priceRange: { type: Type.STRING, description: "Current price per night with currency" },
-                capacityNote: { type: Type.STRING, description: "e.g. Accommodates 2 Adults, 1 Child" }
+                price: { type: Type.STRING, description: "Price per night in INR (e.g. ₹4,500)" },
+                capacity: { type: Type.STRING, description: "Max occupancy e.g. 'Up to 3 Adults, 2 Kids'" }
               },
-              required: ["name", "locationNote", "priceRange", "capacityNote"]
+              required: ["name", "locationNote", "price", "capacity"]
             }
           }
         }
@@ -217,7 +216,7 @@ export async function getHomestayInfo(location: string, adults: string, children
   const ai = getAI();
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
-    contents: `Find unique local homestays and villas in ${location} for ${adults} adults and ${children} children within ${priceRange} budget. Include specific pricing and Pax capacity notes.`,
+    contents: `Find unique local homestays or villas in ${location} for ${adults} adults and ${children} children within ${priceRange} budget. List specific price per night and Pax capacity info.`,
     config: {
       tools: [{ googleSearch: {} }],
       responseMimeType: "application/json",
@@ -231,10 +230,10 @@ export async function getHomestayInfo(location: string, adults: string, children
               properties: {
                 name: { type: Type.STRING },
                 locationNote: { type: Type.STRING },
-                priceRange: { type: Type.STRING, description: "Current price per night with currency" },
-                capacityNote: { type: Type.STRING, description: "e.g. Accommodates 3 Adults, 2 Children" }
+                price: { type: Type.STRING, description: "Estimated price per night in INR" },
+                capacity: { type: Type.STRING, description: "Pax capacity info" }
               },
-              required: ["name", "locationNote", "priceRange", "capacityNote"]
+              required: ["name", "locationNote", "price", "capacity"]
             }
           }
         }
@@ -370,10 +369,10 @@ export async function getNearbyHotels(searchQuery: string, priceRange: string) {
               properties: {
                 name: { type: Type.STRING },
                 locationNote: { type: Type.STRING },
-                priceRange: { type: Type.STRING },
-                capacityNote: { type: Type.STRING, description: "Pax capacity" }
+                price: { type: Type.STRING },
+                capacity: { type: Type.STRING }
               },
-              required: ["name", "locationNote", "priceRange"]
+              required: ["name", "locationNote", "price", "capacity"]
             }
           }
         }

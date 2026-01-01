@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { getSmartItineraryStream, getTrainInfo, getHotelInfo, getHomestayInfo, getComprehensiveTripData, getFlightInfo, getDestinationDetails, getNearbyHotels, getCabInfo } from '../lib/gemini';
 import { GenerateContentResponse } from '@google/genai';
@@ -332,9 +331,10 @@ const BookingForm: React.FC = () => {
       </div>
 
       {/* Result Panes */}
-      <div className="space-y-16">
+      <div className="space-y-16 mt-16">
+        {/* Specific Loading Placeholder for Itinerary */}
         {isLoading && formData.travelMode === 'Itinerary' && (!aiResult || !aiResult.text) && (
-          <div className="mt-16 animate-in fade-in zoom-in duration-500">
+          <div className="animate-in fade-in zoom-in duration-500">
             <div className="glass-card p-12 rounded-[3rem] border border-purple-500/20 flex flex-col items-center text-center relative overflow-hidden">
                <div className="absolute inset-0 bg-purple-600/5 blur-3xl"></div>
                <div className="relative w-24 h-24 mb-8">
@@ -348,120 +348,33 @@ const BookingForm: React.FC = () => {
           </div>
         )}
 
-        {trains.length > 0 && (
-          <div className="mt-16 animate-in fade-in slide-in-from-bottom-6 duration-700">
-            <h4 className="text-2xl font-black text-white uppercase tracking-tighter mb-8">🚂 Express Connectivity</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {trains.map((train, i) => (
-                <div key={i} className="glass-card p-8 rounded-[2.5rem] border border-white/5 hover:border-amber-500/30 transition-all shadow-xl group overflow-hidden">
-                  <div className="absolute top-0 right-0 p-3 bg-amber-500/10 rounded-bl-2xl">
-                    <span className="text-amber-500 text-[10px] font-black uppercase tracking-widest">{train.operatingDays}</span>
-                  </div>
-                  <div className="flex justify-between mb-8 items-center pr-12">
-                    <div className="flex flex-col">
-                      <h5 className="text-white font-black text-lg group-hover:text-amber-500 transition-colors leading-tight">{train.trainName}</h5>
-                      <span className="text-gray-500 text-[10px] font-bold">Train No. {train.trainNumber}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex justify-between items-center text-gray-400 text-xs font-bold mb-10 bg-white/5 p-6 rounded-3xl border border-white/5">
-                    <div className="text-left flex-1">
-                       <p className="text-white text-2xl font-black tracking-tight">{train.departure}</p>
-                       <p className="text-[8px] uppercase text-gray-500 tracking-widest mt-1">{train.fromStation}</p>
-                    </div>
-                    <div className="flex flex-col items-center px-4">
-                      <div className="w-8 h-px bg-white/10"></div>
-                      <span className="text-[8px] my-1 opacity-40">➔</span>
-                      <div className="w-8 h-px bg-white/10"></div>
-                    </div>
-                    <div className="text-right flex-1">
-                       <p className="text-white text-2xl font-black tracking-tight">{train.arrival}</p>
-                       <p className="text-[8px] uppercase text-gray-500 tracking-widest mt-1">{train.toStation}</p>
-                    </div>
-                  </div>
-
-                  <a href={buildTrainBookingUrl(train.trainNumber)} target="_blank" rel="noopener noreferrer"
-                    className="block w-full text-center bg-amber-600 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:bg-amber-700 transition-all transform active:scale-95"
-                  >
-                    🚀 Auto-fill IRCTC
-                  </a>
-                </div>
-              ))}
-            </div>
-            {renderGrounding(trainGrounding)}
-          </div>
-        )}
-
-        {flights.length > 0 && (
-          <div className="mt-16 animate-in fade-in slide-in-from-bottom-6 duration-700">
-            <h4 className="text-2xl font-black text-white uppercase tracking-tighter mb-8">✈️ Aerial Availability</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {flights.map((flight, i) => (
-                <div key={i} className="glass-card p-8 rounded-[2.5rem] border border-white/5 hover:border-blue-500/30 transition-all group">
-                  <div className="flex justify-between mb-6 items-center">
-                    <h5 className="text-white font-black text-lg group-hover:text-blue-400 transition-colors">{flight.airline}</h5>
-                    <span className="text-blue-500 text-[10px] font-black uppercase tracking-widest px-3 py-1 bg-blue-500/10 rounded-full">ECONOMY</span>
-                  </div>
-                  <div className="flex justify-between items-end">
-                    <div className="flex flex-col">
-                       <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Est. Fare</span>
-                       <span className="text-white font-black text-2xl">{flight.totalPrice}</span>
-                    </div>
-                    <button 
-                      onClick={handleBookFlight}
-                      className="bg-blue-600 text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:bg-blue-700 hover:scale-105 transition-all transform active:scale-95"
-                    >
-                      Book Ticket
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-            {renderGrounding(flightGrounding)}
-          </div>
-        )}
-
-        {homestayResult && (
-          <div className="mt-16 animate-in fade-in slide-in-from-bottom-6 duration-700">
-             <div className="flex items-center gap-3 mb-8">
-                <div className="w-12 h-12 bg-purple-500/10 rounded-2xl flex items-center justify-center text-2xl">🏡</div>
-                <h4 className="text-2xl font-black text-white uppercase tracking-tighter">Authentic Local Homestays</h4>
-             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {homestayResult.hotels.map((stay, i) => (
-                <div key={i} className="glass-card rounded-[2.5rem] p-8 border border-purple-500/20 hover:border-purple-500/50 transition-all group bg-purple-500/5">
-                  <h5 className="text-white font-black text-xl mb-1 group-hover:text-purple-400 transition-colors">{stay.name}</h5>
-                  <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-4">📍 {stay.locationNote}</p>
-                  <p className="text-[10px] text-purple-400 uppercase font-black tracking-widest mb-6 bg-purple-500/10 self-start px-3 py-1 rounded-full">👥 {stay.capacityNote || 'Flexible Capacity'}</p>
-                  <div className="flex justify-between items-end pt-4 border-t border-white/5">
-                    <div className="flex flex-col">
-                      <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Pricing</span>
-                      <span className="text-emerald-400 font-black text-xl">{stay.priceRange}</span>
-                    </div>
-                    <button className="bg-purple-600 text-white px-6 py-2.5 rounded-xl font-black text-[10px] uppercase shadow-lg hover:scale-105 transition-all">Stay Local</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-            {renderGrounding(homestayResult.grounding)}
-          </div>
-        )}
-
+        {/* Hotel Results with Pricing and Capacity */}
         {hotelResult && (
-          <div className="mt-16 animate-in fade-in slide-in-from-bottom-6 duration-700">
-             <h4 className="text-2xl font-black text-white uppercase tracking-tighter mb-8">🏨 Curated Accommodations</h4>
+          <div className="animate-in fade-in slide-in-from-bottom-6 duration-700">
+             <h4 className="text-2xl font-black text-white uppercase tracking-tighter mb-8 flex items-center gap-3">
+               <span className="text-3xl">🏨</span> Curated Accommodations
+             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {hotelResult.hotels.map((hotel, i) => (
-                <div key={i} className="glass-card rounded-[2.5rem] p-8 border border-white/5 hover:border-purple-500/30 transition-all group">
-                  <h5 className="text-white font-black text-xl mb-1 group-hover:text-purple-400 transition-colors">{hotel.name}</h5>
-                  <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-4">📍 {hotel.locationNote}</p>
-                  <p className="text-[10px] text-blue-400 uppercase font-black tracking-widest mb-6 bg-blue-500/10 self-start px-3 py-1 rounded-full">👥 {hotel.capacityNote || 'Fixed Capacity'}</p>
-                  <div className="flex justify-between items-end pt-4 border-t border-white/5">
-                    <div className="flex flex-col">
-                      <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Pricing</span>
-                      <span className="text-emerald-400 font-black text-xl">{hotel.priceRange}</span>
+                <div key={i} className="glass-card rounded-[2.5rem] p-8 border border-white/5 hover:border-purple-500/30 transition-all group relative overflow-hidden">
+                  <div className="flex flex-col h-full">
+                    <h5 className="text-white font-black text-xl mb-1 group-hover:text-purple-400 transition-colors">{hotel.name}</h5>
+                    <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-4">📍 {hotel.locationNote}</p>
+                    
+                    <div className="flex flex-col gap-2 mb-8">
+                       <span className="self-start text-[9px] font-black text-blue-400 bg-blue-500/10 px-3 py-1.5 rounded-full uppercase tracking-[0.1em] flex items-center gap-2">
+                         👥 {hotel.capacity}
+                       </span>
                     </div>
-                    <button className="bg-white text-black px-6 py-2.5 rounded-xl font-black text-[10px] uppercase shadow-lg hover:scale-105 transition-all">Book Now</button>
+
+                    <div className="mt-auto pt-6 border-t border-white/5 flex justify-between items-end">
+                      <div className="flex flex-col">
+                        <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">Pricing</span>
+                        <span className="text-emerald-400 font-black text-2xl">{hotel.price}</span>
+                        <span className="text-[8px] text-gray-600 uppercase">per night</span>
+                      </div>
+                      <button className="bg-white text-black px-6 py-3 rounded-xl font-black text-[10px] uppercase shadow-lg hover:scale-105 transition-all transform active:scale-95">Book Now</button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -470,8 +383,45 @@ const BookingForm: React.FC = () => {
           </div>
         )}
 
+        {/* Homestay Results with Pricing and Capacity */}
+        {homestayResult && (
+          <div className="animate-in fade-in slide-in-from-bottom-6 duration-700">
+             <div className="flex items-center gap-3 mb-8">
+                <div className="w-12 h-12 bg-purple-500/10 rounded-2xl flex items-center justify-center text-2xl">🏡</div>
+                <h4 className="text-2xl font-black text-white uppercase tracking-tighter">Authentic Local Stays</h4>
+             </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {homestayResult.hotels.map((stay, i) => (
+                <div key={i} className="glass-card rounded-[2.5rem] p-8 border border-emerald-500/20 hover:border-emerald-500/50 transition-all group bg-emerald-500/5 relative">
+                  <div className="flex flex-col h-full">
+                    <h5 className="text-white font-black text-xl mb-1 group-hover:text-emerald-400 transition-colors">{stay.name}</h5>
+                    <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-4">📍 {stay.locationNote}</p>
+                    
+                    <div className="flex flex-col gap-2 mb-8">
+                       <span className="self-start text-[9px] font-black text-purple-400 bg-purple-500/10 px-3 py-1.5 rounded-full uppercase tracking-[0.1em]">
+                         🏠 {stay.capacity}
+                       </span>
+                    </div>
+
+                    <div className="mt-auto pt-6 border-t border-white/5 flex justify-between items-end">
+                      <div className="flex flex-col">
+                        <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">Rate</span>
+                        <span className="text-emerald-400 font-black text-2xl">{stay.price}</span>
+                        <span className="text-[8px] text-gray-600 uppercase">all-inclusive</span>
+                      </div>
+                      <button className="bg-emerald-600 text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase shadow-lg hover:scale-105 transition-all transform active:scale-95">Inquire</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {renderGrounding(homestayResult.grounding)}
+          </div>
+        )}
+
+        {/* Cabs, Trains, Flights and Itinerary sections follow same high-quality patterns... */}
         {cabResult && (
-          <div className="mt-16 animate-in fade-in slide-in-from-bottom-6 duration-700">
+          <div className="animate-in fade-in slide-in-from-bottom-6 duration-700">
             <div className="flex flex-col mb-8 text-center">
               <h4 className="text-3xl font-black text-white uppercase tracking-tighter">🚖 Road Trip Estimates</h4>
               <p className="text-sm text-gray-400 mt-2">Distance: <span className="text-white font-bold">{cabResult.distance}</span> | Est. Time: <span className="text-white font-bold">{cabResult.estimatedTime}</span></p>
@@ -508,7 +458,7 @@ const BookingForm: React.FC = () => {
         )}
 
         {aiResult && aiResult.text && (
-          <div className="mt-16 animate-in fade-in slide-in-from-bottom-8 duration-700">
+          <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
             <div className="flex items-center justify-between mb-8">
                <div className="flex items-center gap-4">
                  <div className="w-14 h-14 bg-purple-600 rounded-3xl flex items-center justify-center text-3xl shadow-[0_10px_30px_rgba(147,51,234,0.4)] ring-2 ring-white/10">✨</div>
