@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { memo } from 'react';
 
 const Hero: React.FC = () => {
   const triggerAI = () => {
@@ -10,20 +9,17 @@ const Hero: React.FC = () => {
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden pt-20 pb-20">
-      {/* Dynamic Background Assets */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        {/* Glows */}
-        <div className="absolute top-[-10%] left-[-5%] w-[60%] h-[60%] bg-purple-600/10 rounded-full blur-[120px]"></div>
-        <div className="absolute bottom-[-10%] right-[-5%] w-[60%] h-[60%] bg-blue-600/10 rounded-full blur-[120px]"></div>
+      {/* Optimized Background Assets */}
+      <div className="absolute inset-0 z-0 pointer-events-none select-none">
+        <div className="absolute top-[-10%] left-[-5%] w-[60%] h-[60%] bg-purple-600/10 rounded-full blur-[120px] will-change-transform"></div>
+        <div className="absolute bottom-[-10%] right-[-5%] w-[60%] h-[60%] bg-blue-600/10 rounded-full blur-[120px] will-change-transform"></div>
         
-        {/* Animated Travel Icons */}
         <div className="absolute top-1/4 left-10 text-6xl opacity-20 animate-float" style={{ animationDelay: '0s' }}>✈️</div>
         <div className="absolute bottom-1/3 right-20 text-7xl opacity-10 animate-float" style={{ animationDelay: '2s' }}>🏨</div>
         <div className="absolute top-1/2 left-1/4 text-5xl opacity-10 animate-float" style={{ animationDelay: '4s' }}>🚂</div>
         <div className="absolute bottom-1/4 left-20 text-4xl opacity-15 animate-float" style={{ animationDelay: '1s' }}>🚕</div>
         <div className="absolute top-1/3 right-1/4 text-5xl opacity-5 animate-float" style={{ animationDelay: '3s' }}>🌴</div>
 
-        {/* Drifting Flight Path */}
         <div className="absolute top-1/3 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent animate-drift">
            <div className="absolute -top-3 right-0 text-xl">✈️</div>
         </div>
@@ -66,4 +62,4 @@ const Hero: React.FC = () => {
   );
 };
 
-export default Hero;
+export default memo(Hero);

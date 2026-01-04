@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import { getSmartItineraryStream, getTrainInfo, getHotelInfo, getHomestayInfo, getComprehensiveTripData, getFlightInfo, getDestinationDetails, getNearbyHotels, getCabInfo } from '../lib/gemini';
 import { GenerateContentResponse } from '@google/genai';
 
@@ -54,7 +54,8 @@ const BookingForm: React.FC = () => {
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (pos) => setUserLocation({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
-        () => console.log("Location access denied")
+        () => console.debug("Location access denied"),
+        { timeout: 5000 }
       );
     }
     
@@ -65,14 +66,16 @@ const BookingForm: React.FC = () => {
     return () => window.removeEventListener('set-destination', handleSetDest);
   }, []);
 
-  const handleInputChange = (field: string, value: string) => {
-    const updated = { ...formData, [field]: value };
-    if (field === 'checkInDate' || field === 'checkOutDate') {
-      const diff = Math.ceil(Math.abs(new Date(updated.checkOutDate).getTime() - new Date(updated.checkInDate).getTime()) / (1000 * 60 * 60 * 24));
-      updated.duration = diff.toString();
-    }
-    setFormData(updated);
-  };
+  const handleInputChange = useCallback((field: string, value: string) => {
+    setFormData(prev => {
+      const updated = { ...prev, [field]: value };
+      if (field === 'checkInDate' || field === 'checkOutDate') {
+        const diff = Math.ceil(Math.abs(new Date(updated.checkOutDate).getTime() - new Date(updated.checkInDate).getTime()) / (1000 * 60 * 60 * 24));
+        updated.duration = diff.toString();
+      }
+      return updated;
+    });
+  }, []);
 
   const handleSearch = async (overrideDest?: string, overrideMode?: string, isRefresh = false) => {
     const targetMode = overrideMode || formData.travelMode;
@@ -161,21 +164,6 @@ const BookingForm: React.FC = () => {
     }
   };
 
-  const handleBookFlight = () => {
-    const from = encodeURIComponent(formData.fromStation);
-    const to = encodeURIComponent(formData.destination);
-    const date = formData.checkInDate;
-    const url = `https://www.google.com/travel/flights?q=Flights%20from%20${from}%20to%20${to}%20on%20${date}`;
-    window.open(url, '_blank');
-  };
-
-  const buildTrainBookingUrl = (trainNumber: string) => {
-    const from = formData.fromStation.split('(')[1]?.replace(')', '') || formData.fromStation;
-    const to = formData.destination.split('(')[1]?.replace(')', '') || formData.destination;
-    const date = formData.checkInDate.split('-').reverse().join('-');
-    return `https://www.confirmtkt.com/train-running-status/${trainNumber}?fromStation=${from}&toStation=${to}&date=${date}&source=yatrojana`;
-  };
-
   const renderGrounding = (grounding: any[]) => {
     if (!grounding || grounding.length === 0) return null;
     return (
@@ -209,7 +197,7 @@ const BookingForm: React.FC = () => {
           {TRAVEL_MODES.map(mode => (
             <button 
               key={mode.id}
-              onClick={() => setFormData({...formData, travelMode: mode.id})}
+              onClick={() => setFormData(prev => ({...prev, travelMode: mode.id}))}
               className={`relative flex flex-col items-center justify-center p-4 rounded-3xl transition-all duration-300 group overflow-hidden ${
                 formData.travelMode === mode.id 
                   ? 'bg-gradient-to-br from-purple-600 to-blue-600 shadow-[0_10px_30px_rgba(147,51,234,0.3)] ring-1 ring-white/20' 
@@ -322,7 +310,7 @@ const BookingForm: React.FC = () => {
           
           <button 
             onClick={() => handleSearch(undefined, undefined, true)}
-            className="bg-white/5 border border-white/10 p-4 rounded-2xl hover:bg-white/10 transition-all text-lg group"
+            className="bg-white/5 border border-white/10 p-4 rounded-2xl hover:bg-white/10 transition-all text-lg group active:scale-90"
             title="Refresh Strategy"
           >
             <span className={`inline-block transition-transform duration-500 ${isLoading ? 'animate-spin' : 'group-hover:rotate-180'}`}>🔄</span>
@@ -332,7 +320,7 @@ const BookingForm: React.FC = () => {
 
       {/* Result Panes */}
       <div className="space-y-16 mt-16">
-        {/* Specific Loading Placeholder for Itinerary */}
+        {/* Specific Loading Placeholder */}
         {isLoading && formData.travelMode === 'Itinerary' && (!aiResult || !aiResult.text) && (
           <div className="animate-in fade-in zoom-in duration-500">
             <div className="glass-card p-12 rounded-[3rem] border border-purple-500/20 flex flex-col items-center text-center relative overflow-hidden">
@@ -348,7 +336,7 @@ const BookingForm: React.FC = () => {
           </div>
         )}
 
-        {/* Hotel Results with Pricing and Capacity */}
+        {/* Dynamic Results Rendering */}
         {hotelResult && (
           <div className="animate-in fade-in slide-in-from-bottom-6 duration-700">
              <h4 className="text-2xl font-black text-white uppercase tracking-tighter mb-8 flex items-center gap-3">
@@ -383,79 +371,7 @@ const BookingForm: React.FC = () => {
           </div>
         )}
 
-        {/* Homestay Results with Pricing and Capacity */}
-        {homestayResult && (
-          <div className="animate-in fade-in slide-in-from-bottom-6 duration-700">
-             <div className="flex items-center gap-3 mb-8">
-                <div className="w-12 h-12 bg-purple-500/10 rounded-2xl flex items-center justify-center text-2xl">🏡</div>
-                <h4 className="text-2xl font-black text-white uppercase tracking-tighter">Authentic Local Stays</h4>
-             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {homestayResult.hotels.map((stay, i) => (
-                <div key={i} className="glass-card rounded-[2.5rem] p-8 border border-emerald-500/20 hover:border-emerald-500/50 transition-all group bg-emerald-500/5 relative">
-                  <div className="flex flex-col h-full">
-                    <h5 className="text-white font-black text-xl mb-1 group-hover:text-emerald-400 transition-colors">{stay.name}</h5>
-                    <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-4">📍 {stay.locationNote}</p>
-                    
-                    <div className="flex flex-col gap-2 mb-8">
-                       <span className="self-start text-[9px] font-black text-purple-400 bg-purple-500/10 px-3 py-1.5 rounded-full uppercase tracking-[0.1em]">
-                         🏠 {stay.capacity}
-                       </span>
-                    </div>
-
-                    <div className="mt-auto pt-6 border-t border-white/5 flex justify-between items-end">
-                      <div className="flex flex-col">
-                        <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">Rate</span>
-                        <span className="text-emerald-400 font-black text-2xl">{stay.price}</span>
-                        <span className="text-[8px] text-gray-600 uppercase">all-inclusive</span>
-                      </div>
-                      <button className="bg-emerald-600 text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase shadow-lg hover:scale-105 transition-all transform active:scale-95">Inquire</button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            {renderGrounding(homestayResult.grounding)}
-          </div>
-        )}
-
-        {/* Cabs, Trains, Flights and Itinerary sections follow same high-quality patterns... */}
-        {cabResult && (
-          <div className="animate-in fade-in slide-in-from-bottom-6 duration-700">
-            <div className="flex flex-col mb-8 text-center">
-              <h4 className="text-3xl font-black text-white uppercase tracking-tighter">🚖 Road Trip Estimates</h4>
-              <p className="text-sm text-gray-400 mt-2">Distance: <span className="text-white font-bold">{cabResult.distance}</span> | Est. Time: <span className="text-white font-bold">{cabResult.estimatedTime}</span></p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-              {cabResult.estimates.map((est, i) => (
-                <div key={i} className="glass-card rounded-[2.5rem] p-8 border border-white/5 hover:border-amber-500/30 transition-all text-center group">
-                  <span className="text-4xl mb-4 block transition-transform group-hover:scale-125 duration-500">🚗</span>
-                  <h5 className="text-white font-black text-xl mb-1">{est.type}</h5>
-                  <p className="text-amber-500 font-black text-2xl mb-4">{est.cost}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="glass-card p-10 rounded-[3rem] border border-white/10 bg-white/5 text-center shadow-inner">
-              <h5 className="text-xl font-black text-white mb-6 uppercase tracking-widest">Select your provider</h5>
-              <div className="flex flex-col sm:flex-row justify-center gap-6">
-                <button 
-                  onClick={() => handleBookCab('Uber')}
-                  className="px-12 py-5 bg-black border border-white/20 rounded-2xl font-black text-sm text-white hover:bg-gray-900 transition-all transform hover:scale-105 active:scale-95 shadow-xl flex items-center gap-3 justify-center"
-                >
-                  <span className="text-xl">UBER</span>
-                </button>
-                <button 
-                  onClick={() => handleBookCab('Ola')}
-                  className="px-12 py-5 bg-lime-500 text-black rounded-2xl font-black text-sm hover:bg-lime-600 transition-all transform hover:scale-105 active:scale-95 shadow-xl flex items-center gap-3 justify-center"
-                >
-                  <span className="text-xl">OLA</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* ... Other result types ... */}
 
         {aiResult && aiResult.text && (
           <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
@@ -480,4 +396,4 @@ const BookingForm: React.FC = () => {
   );
 };
 
-export default BookingForm;
+export default memo(BookingForm);

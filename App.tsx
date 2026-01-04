@@ -4,6 +4,7 @@ import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import BookingForm from './components/BookingForm';
 import DestinationDiscovery from './components/DestinationDiscovery';
+import HolidayPackages from './components/HolidayPackages';
 import Services from './components/Services';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
@@ -28,6 +29,10 @@ const App: React.FC = () => {
         <div className="relative z-20 -mt-16 md:-mt-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto mb-24">
           <BookingForm />
         </div>
+
+        <section id="packages" className="py-24 bg-white/[0.01]">
+          <HolidayPackages />
+        </section>
 
         <section id="discover" className="py-24">
           <DestinationDiscovery />
